@@ -39,6 +39,7 @@ def find_countries
     countries = retrieve_countries
     store_countries_to_file(countries)
   end
+  puts countries.to_s
   countries
 end
 

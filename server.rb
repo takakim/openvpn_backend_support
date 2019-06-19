@@ -16,8 +16,9 @@ def kill_pid(cmd)
 end
 
 def current_state
+  sleep 2
   ps = `ps aux | grep openvpn`
-  matched = ps.match(/([\D]{2}[\d]{4}\.nordvpn\.com\.[\w]+\.ovpn)/i)
+  matched = ps.match(/([\D]{2}[\d]{2,}\.nordvpn\.com\.[\w]+\.ovpn)/i)
   if matched
     matched.captures[0]
   else
@@ -25,13 +26,18 @@ def current_state
   end
 end
 
+def find_ovpn(a_server)
+  openvpn_config = "/etc/openvpn/servers/#{a_server}.nordvpn.com.udp1194.ovpn"
+  openvpn_config if File.exist? openvpn_config
+end
+
 def parse_params(a_param, a_server)
   countries = find_countries
+  a_param = 'GB' if a_param.upcase == 'UK'
   if a_param.length == 2 && countries[a_param.upcase]
-    a_param = 'GB' if a_param.upcase == 'UK'
     result = find_best_server a_param, a_server
   elsif a_param.length > 2
-    result = find_best_server a_param, a_server
+    result = a_param
   else
     result = nil
   end
@@ -39,19 +45,17 @@ def parse_params(a_param, a_server)
 end
 
 get '/change-server' do
-  server = parse_params params[:server], current_state
   current_server = current_state
+  server = parse_params params[:server], current_state
   if server
     openvpn_auth = '--auth-user-pass /etc/openvpn/auth.txt'
-    openvpn_config = "/etc/openvpn/servers/#{server}.nordvpn.com.udp1194.ovpn"
-    if File.exist?(openvpn_config)
+    if (openvpn_config = find_ovpn server)
       kill_pid 'openvpn'
       openvpn_command = "sudo openvpn --config #{openvpn_config} #{openvpn_auth}"
       job1 = fork do
         exec openvpn_command
       end
       Process.detach(job1)
-      sleep 2
       new_server = current_state
       "Current server is: #{new_server}\nPreviously connected to: #{current_server}"
     else
