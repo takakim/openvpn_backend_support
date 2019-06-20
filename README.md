@@ -1,2 +1,2 @@
 # openvpn_backend_support
-Simple backend server to support changing a local vpn client connection according to servers load.
+Simple backend server that supports changing a local vpn client to a different server, either a specific server or the best server from NordVPN.
