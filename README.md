@@ -1,4 +1,4 @@
-Openvpn server switch support
+# Openvpn server switch support
 Simple backend server that supports changing a local vpn client to a different server, either a specific server or the best server from NordVPN.
 The code is based on ruby-2.6.3 and sinatra 
 Some extra libraries:
