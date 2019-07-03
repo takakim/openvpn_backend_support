@@ -6,7 +6,7 @@ require 'json'
 
 def evaluate_speedtest
   begin
-    run = Speedtest::Test.new().run
+    run = Speedtest::Test.new.run
     result = {
       download: run.pretty_download_rate, upload: run.pretty_upload_rate
     }
@@ -20,14 +20,14 @@ def evaluate_fast_com
   result = `speed-test`
   regex = /([\d]+[\.\d]+ Mbps)/
   results = result.scan(regex).flatten.map(&:to_f)
-  {download: "#{results[-2]} Mbps", upload: "#{results[-1]} Mbps"}
+  { download: "#{results[-2]} Mbps", upload: "#{results[-1]} Mbps" }
 end
 
 def store_data(a_data)
   time = Time.now.strftime '%Y-%m-%d_%H-%M-%S'
   begin
     target_file = File.open("measurement_#{time}.data", 'w')
-    target_file.write(a_data)
+    target_file.write(JSON.generate(a_data))
   rescue StandardError => e
     puts e.to_s
   ensure
@@ -36,10 +36,13 @@ def store_data(a_data)
 end
 
 def retrieve_data
-  file = Dir['**/*.{data}'].max_by {|f| File.mtime(f)}
-  result = JSON.parse(File.open(file).read)
-rescue StandardError => e
-  puts e.to_s
+  result = nil
+  begin
+    file = Dir['**/*.{data}'].max_by { |f| File.mtime(f) }
+    result = JSON.parse(File.open(file).read, symbolize_names: true)
+  rescue StandardError => e
+    puts e.to_s
+  end
   result
 end
 
@@ -47,15 +50,12 @@ def compare(initial, last)
   down = 'download'
   up = 'upload'
   result = {}
-  initial.each_key do |key|
-    download_rate = last[key][down].to_f / initial[key][down].to_f
-    upload_rate = last[key][up].to_f / initial[key][up].to_f
-    result.merge!({key =>
-      {
-        down => download_rate,
-        up => upload_rate
-      }
-    })
+  initial.keys.each do |key|
+    initial_obj = initial[key]
+    last_obj = last[key]
+    download_rate = last_obj[down.to_sym].to_f / initial_obj[down.to_sym].to_f
+    upload_rate = last_obj[up.to_sym].to_f / initial_obj[up.to_sym].to_f
+    result.merge!({ key => { "#{down}": download_rate, "#{up}": upload_rate }})
   end
   result
 end
@@ -63,9 +63,8 @@ end
 initial = retrieve_data
 speedtest = evaluate_speedtest
 fast = evaluate_fast_com
-result = ({speedtest: speedtest, fast: fast}).to_json
-# puts "speed test: #{speedtest}"
-# puts "fast: #{fast}"
+result = { speedtest: speedtest, fast: fast }
+initial = result if initial.nil?
 puts result.to_s
 puts store_data result
-puts compare(initial, JSON.parse(result)).to_s
+puts compare(initial, result).to_s
