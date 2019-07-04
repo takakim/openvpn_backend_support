@@ -47,15 +47,13 @@ def retrieve_data
 end
 
 def compare(initial, last)
-  down = 'download'
-  up = 'upload'
   result = {}
   initial.keys.each do |key|
     initial_obj = initial[key]
     last_obj = last[key]
-    download_rate = last_obj[down.to_sym].to_f / initial_obj[down.to_sym].to_f
-    upload_rate = last_obj[up.to_sym].to_f / initial_obj[up.to_sym].to_f
-    result.merge!({ key => { "#{down}": download_rate, "#{up}": upload_rate }})
+    download_rate = last_obj[:download].to_f / initial_obj[:download].to_f
+    upload_rate = last_obj[:upload].to_f / initial_obj[:upload].to_f
+    result.merge!(key => { download: download_rate, upload: upload_rate })
   end
   result
 end
