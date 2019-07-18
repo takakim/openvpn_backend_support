@@ -27,7 +27,7 @@ def current_state
 end
 
 def find_ovpn(a_server)
-  openvpn_config = "/etc/openvpn/servers/#{a_server}.nordvpn.com.udp1194.ovpn"
+  openvpn_config = "/etc/openvpn/servers/ovpn_udp/#{a_server}.nordvpn.com.udp1194.ovpn"
   openvpn_config if File.exist? openvpn_config
 end
 

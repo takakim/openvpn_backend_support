@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/bash
 set -e
 #######
 ## Arguments $1 LAN interface name $2 the vpn interface
